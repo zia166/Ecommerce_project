@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="{% static 'js/cart.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/mdb.min.js' %}"></script>
+    
+    <link rel="stylesheet"  href="{% static 'styles/style.css' %}">
+      <!-- Font Awesome -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+      <!-- Bootstrap -->
+    
+      <!-- Material Design for Bootstrap -->
+      <link href="{% static 'css/mdb.min.css' %}" rel="stylesheet">
+      <link href="{% static 'css/mdb.dark.min.css' %}" rel="stylesheet">
+      <link href="{% static 'css/mdb.dark.rtl.min.css' %}" rel="stylesheet">
+      <link href="{% static 'css/mdb.rtl.min.css' %}" rel="stylesheet">
+      
+
+
+      
+      
+    <title>---TEKSA--</title>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    {% block content %}
+
+    {% endblock %}
+    
+
+</body>
+</html>
