@@ -1,0 +1,24 @@
+{% extends 'main.html' %}
+{% load static %}
+{% block content %}
+<div class="container"style="margin:0,auto; margin-top:20px;">
+   <div class="row ">
+   
+       {% for product in products %}
+       <div class="col-lg-4" style="margin-top: 10px;">
+          <img class="thumbnail" src="{{product.imageURL}}">
+          <div class="box-element product">
+              <h6><strong>{{product.name}}</strong></h6>
+              <hr>
+              <button data-product="{{product.id}}" data-action="add" class="btn btn-outline-secondary add-btn update-cart"> 
+               {# % url 'create' user.id % #}
+              <a href="#">Add to Cart</a> 
+            </button>
+              <a class="btn btn-outline-success" href="#">View</a>
+              <h4 style="display:inline-block;float:right;"><strong> &euro;{{product.price|floatformat:2}}</strong></h4>
+           </div>
+      </div>
+      {% endfor%}
+   </div>
+</div>
+{% endblock %}
