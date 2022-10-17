@@ -55,15 +55,15 @@
    
     {% for order in orders%}
     
-    {% if order.customer == user.customer%}
-      <h5> {{user.customer}} </h5>
+    {% if order.customer == user.customer %}
+      <h5> {{user.customer}}</h5>
        <a href="{% url 'cart' order.id  %}">
          <img  id="cart-icon" style="width:30px;margin-right: 10px;"src="{% static 'images/cart.png' %}">
          <span  id="cart-total" class="badge rounded-pill badge-notification bg-danger">{{order.get_cart_item}}</span>
+        </a>
         {% endif %}
-     </a>
-     
-     {% endfor %} 
+        
+        {% endfor %} 
      
 
    </div>
@@ -106,12 +106,14 @@
       </ul>
     </div>
   </div>
+  
   {% else %}
   <div class="d-flex align-items-center">
     <!-- Icon -->
     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <h6><a href="#">Guest</a></h6>
+    
      <li class="nav-item">
-
        <a href="#">
          <img  id="cart-icon" style="width:30px;margin-right: 10px;"src="{% static 'images/cart.png' %}">
          <span  id="cart-total" class="badge rounded-pill badge-notification bg-danger"></span>
