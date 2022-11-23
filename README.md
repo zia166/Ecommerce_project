@@ -22,7 +22,7 @@ Ecommerce website built with Django 4.10, Python 3.10.4
 ![image](https://user-images.githubusercontent.com/105048583/203444179-827cfd0f-2d1b-4397-9720-0ee10dd8d43b.png)
 
 `Stripe Payment Page`
-![image](https://user-images.githubusercontent.com/29988949/66291610-29c51b80-e897-11e9-8b47-20de35d6c1d0.png)
+
 
 `Order Success Page`
 ![image](https://user-images.githubusercontent.com/105048583/203443642-1cd40bc9-e02e-468d-94c0-190f5bdf1f9b.png)
