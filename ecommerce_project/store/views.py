@@ -1,15 +1,20 @@
 from dataclasses import fields
 
+
 from django.shortcuts import render
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy, reverse
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import UpdateView, DeleteView, CreateView
-
+from django.http import JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import *
 from store.models import Product
+import json
+import datetime
+
+from .utils import cookieCart, cartData, guestOrder
 
 
 class CustomLoginView(LoginView):
@@ -18,22 +23,53 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user: True
 
     def get_success_url(self):
-
-        return reverse("store", args=[self.request.user.id])
+        return reverse("home")
+        # return reverse("store", args=[self.request.user.id])
 
 
 def HomePage(request):
-    orders = Order.objects.all()
+    if request.user.is_authenticated:
+        orders = Order.objects.filter(complete=False)
+
+    else:
+        orders = {"get_cart_total": 0, "get_cart_item": 0, "shipping": False}
+    cartitem = 0
+    # cartitem = orders.get_cart_item
+    # avoid an error if cart cookie when loads first time by user
+    try:
+        cart = json.loads(request.COOKIES["cart"])
+    except:
+        cart = {}
+    print("cart:", cart)
+
+    for i in cart:
+        cartitem += cart[i]["quantity"]
     customer = Customer.objects.all()
-    context = {"orders": orders, "customer": customer}
+    context = {"orders": orders, "customer": customer, "cartitem": cartitem}
     return render(request, "store/home.html", context)
 
 
-def CustomerPage(request, pk):
-    orders = Order.objects.get(customer_id=pk)
-    customer = Customer.objects.all()
-    context = {"orders": orders, "customer": customer}
-    return render(request, "store/home.html", context)
+def updateItem(request):
+    data = json.loads(request.body)
+    productId = data["productId"]
+    action = data["action"]
+    print("Action:", action)
+    print("productId:", productId)
+    customer = request.user.customer
+    product = Product.objects.get(id=productId)
+    order, created = Order.objects.get_or_create(customer=customer, complete=False)
+    orderItem, created = OrderItem.objects.get_or_create(order=order, product=product)
+
+    if action == "add":
+        orderItem.quantity = orderItem.quantity + 1
+    elif action == "remove":
+        orderItem.quantity = orderItem.quantity - 1
+    orderItem.save()
+
+    if orderItem.quantity <= 0:
+        orderItem.delete()
+
+    return JsonResponse("Item was added", safe=False)
 
 
 class ProductList(ListView):
@@ -42,29 +78,11 @@ class ProductList(ListView):
     context_object_name = "products"
 
     def get_context_data(self, **kwargs):
+        print(self.request.user)
         context = super().get_context_data(**kwargs)
-        # context["order"] = Order.objects.get(id=self.kwargs["pk"])
-        context["order"] = Order.objects.all()
+        context["orders"] = Order.objects.filter(complete=False)
 
         return context
-
-
-# def cart(request):
-
-#     if request.user.is_authenticated:
-
-#         customer = request.user.customer
-#         print(request.user)
-#         order, created = Order.objects.get_or_create(customer=customer, complete=False)
-
-#         items = order.orderitem_set.all()
-#         print(items)
-#     else:
-#     Create empty cart for now for non-logged in user
-#     items = []
-
-#     context = {"items": items, "order": order}
-#     return render(request, "store/cart.html", context)
 
 
 class OrderList(LoginRequiredMixin, ListView):
@@ -73,61 +91,142 @@ class OrderList(LoginRequiredMixin, ListView):
     context_object_name = "items"
 
     def get_queryset(self):
-
-        return OrderItem.objects.filter(order=Order.objects.get(id=self.kwargs["pk"]))
+        return OrderItem.objects.filter(
+            order=Order.objects.get(id=self.kwargs["pk"], complete=False)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["order"] = Order.objects.get(id=self.kwargs["pk"])
+        context["order_1"] = Order.objects.get(id=self.kwargs["pk"], complete=False)
+        context["orders"] = Order.objects.filter(complete=False)
         return context
 
 
-# class OrderCreate(LoginRequiredMixin, CreateView):
-#     template_name = "order_form.html"
-#     form_class = OrderForm
-#     other_form_class = OrderListForm
-#     # success_url: reverse_lazy("store")
+def store(request):
+    # data = cartData(request)
 
-#     def get_context_data(self, *args, **kwargs):
-#         context_data = super(OrderCreate, self).get_context_data(*args, **kwargs)
+    # cartItems = data["cartItems"]
+    # order = data["order"]
+    # items = data["items"]
+    order = {"get_cart_total": 0, "get_cart_item": 0, "shipping": False}
+    cartitem = order["get_cart_item"]
+    try:
+        cart = json.loads(request.COOKIES["cart"])
+    except:
+        cart = {}
+    print("Cart:", cart)
 
-#         context_data.update(
-#             {
-#                 "new_customer": True,
-#                 "other_form": other_form_class,
-#             }
-#         )
-#         return context_data
+    for i in cart:
+        cartitem += cart[i]["quantity"]
 
-
-# class OrderItemCreate(LoginRequiredMixin, CreateView):
-#     model = OrderItem
-#     fields = "__all__"
-#     template_name = "order_form.html"
-#     success_url: reverse_lazy("store")
-
-#     def form_valid(self, form):
-#         form.instance.created_by = self.request.user
-#         return super().form_valid(form)
+    products = Product.objects.all()
+    context = {"products": products, "cartitem": cartitem}
+    return render(request, "store/store.html", context)
 
 
-class OrderCreateView(LoginRequiredMixin, CreateView):
-    model = OrderItem
-    fields = ["product", "quantity", "order"]
+def cart(request):
+    cookieData = cookieCart(request)
+    cartitem = cookieData["cartitem"]
+    order_1 = cookieData["order"]
+    items = cookieData["items"]
+    # data = cartData(request)
 
-    template_name = "store/order_form.html"
-    # success_url: reverse_lazy("store")
-    def get_initial(self):
-        initial_data = super(OrderCreateView, self).get_initial()
-        order = Order.objects.get(id=self.kwargs["pk"])
-        initial_data["order"] = order
-        return initial_data
+    # orders = data["cartItems"]
+    # order_1 = data["order"]
+    # items = data["items"]
+    # items = []
+    # order_1 = {"get_cart_total": 0, "get_cart_item": 0, "shipping": False}
+    # cartitem = order_1["get_cart_item"]
+    # try:
+    #     cart = json.loads(request.COOKIES["cart"])
+    # except:
+    #     cart = {}
+    # print("Cart:", cart)
 
-    # def form_valid(self, form):
-    #     form.instance.user = self.request.user
-    #     form["order"].field.widget.attr["readonly"] = "readonly"
-    #     return super(OrderCreateView, self).form_valid(form)
+    # for i in cart:
+    #     # to avoid error if product removed from database
+    #     try:
+    #         cartitem += cart[i]["quantity"]
+    #         product = Product.objects.get(id=i)
+    #         total = product.price * cart[i]["quantity"]
+    #         order_1["get_cart_total"] = total
+    #         order_1["get_cart_item"] += cart[i]["quantity"]
+    #         item = {
+    #             "product": {
+    #                 "id": product.id,
+    #                 "name": product.name,
+    #                 "price": product.price,
+    #                 "imageURL": product.imageURL,
+    #             },
+    #             "quantity": cart[i]["quantity"],
+    #             "get_total": total,
+    #         }
+    #         items.append(item)
+    #         if product.digital == False:
+    #             order_1["shipping"] = True
+    #     except:
+    #         pass
+    # context = {"items": items, "orders": orders, "order_1": order_1}
+    return render(
+        request,
+        "store/cart.html",
+        {
+            "cartitem": cartitem,
+            "order_1": order_1,
+            "items": items,
+        },
+    )
 
-    def get_success_url(self):
 
-        return reverse("store", args=[self.request.user.id])
+def checkoutPage(request):
+    if request.user.is_authenticated:
+        orders = Order.objects.filter(complete=False)
+        customer = request.user.customer
+        print(request.user)
+        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+        product = Product.objects.all()
+        items = order.orderitem_set.all()
+    else:
+
+        cookieData = cookieCart(request)
+        cartitem = cookieData["cartitem"]
+        order = cookieData["order"]
+        orders = cookieData["order"]
+        items = cookieData["items"]
+
+    context = {
+        "items": items,
+        "order": order,
+        "orders": orders,
+        # "cartitem": cartitem,
+    }
+    return render(request, "store/checkout.html", context)
+
+
+def processOrder(request):
+    data = json.loads(request.body)
+    # print("Data:", request.body)
+    transaction_id = datetime.datetime.now().timestamp()
+
+    if request.user.is_authenticated:
+        customer = request.user.customer
+        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+        order.transaction_id = transaction_id
+        total = float(data["form"]["total"])
+        print(data["form"])
+        # avoid manipulating by user
+        if total == order.get_cart_total:
+            order.complete = True
+        order.save()
+
+        if order.shipping == True:
+            ShippingAddress.objects.create(
+                customer=customer,
+                order=order,
+                address=data["shipping"]["address"],
+                city=data["shipping"]["city"],
+                state=data["shipping"]["state"],
+                zipcode=data["shipping"]["zipcode"],
+            )
+
+    return JsonResponse("Payment submitted..", safe=False)
