@@ -6,11 +6,15 @@
         
             <div class="col-lg-12">
                 <div class="box-element">
+                    {% if request.user.is_authenticated %}
                     <a class="btn btn-outline-dark"href="{% url 'store' user.id %}">&#x2190;Continue Shopping</a>
+                    {% else %}
+                    <a class="btn btn-outline-dark"href="{% url 'store1' %}">&#x2190;Continue Shopping</a>
+                    {% endif %}
                  <br><br>
                  <table class ="table">
                     
-                    <tr>
+                    <tr class="table-primary">
                         <th><h5>Items: <strong>{{order_1.get_cart_item}}</strong></h5></th>
                         <th><h5>Total: <strong>&euro;{{order_1.get_cart_total|floatformat:2}}</strong></h5></th>
                         <th>
@@ -26,9 +30,9 @@
                 <div class="box-element">
                   <div class="cart-row">
                     <div style="flex:1"><strong>Product</strong></div>
-                    <div style="flex:2"><strong>Item </strong></div>
-                    <div style="flex:2"><strong>Price </strong></div>
-                    <div style="flex:1"><strong>Quantity </strong></div>   
+                    <div style="flex:1; margin-left:200px;"><strong>Item </strong></div>
+                    <div style="flex:1;margin-left:100px;"><strong>Price </strong></div>
+                    <div style="flex:2"><strong>Quantity </strong></div>   
                     <div style="flex:1"><strong> Total</strong></div>   
     
                 </div>

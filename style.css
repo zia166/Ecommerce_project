@@ -21,24 +21,23 @@
 }
 .banner{
     margin-top:200px;
-    /* width:100%; */
+ 
     margin-left: 10px;
-    padding:70px;
-    height: 150%;
+   
     margin-right:0px;
     padding-right: 0;
     background-color: var(--color-main);
     box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.15);
 }
 .line_1{
-    padding:30px;
-    margin-left:px;
+    /* padding:70px; */
+    margin-left:0px;
     border-left: 3px solid var(--color-gray);
-    height: 200px;
+    height: 300px;
 
 }
 h4 span{
-    line-height:1.05;
+    line-height:2.05em;
     color: var(--color-gray);
     display: block;
 }
@@ -59,7 +58,8 @@ h4 span{
     margin-left:35px;
 }
 .sub_heading{
-    
+    margin-left:10px;
+    border:2px solid #2d2d39;
     padding: 90px;
     font-size: smaller;
     font-weight: 100;

@@ -45,15 +45,20 @@
                 <br>
                 <div class="box-element hidden" id="payment-info">
                     <small>Paypal Options</small>
-                    <button id="make-payment">Make payment</button>
+                    <div id="paypal-button-container"></div>
+                    <!-- <button id="make-payment">Make payment</button> -->
                 </div>
                 
             </div>
     
             <div class="col-lg-6">
                 <div class="box-element">
+                    {% if not request.user.is_authenticated %}
+                    <a  class="btn btn-outline-dark" href="{% url 'cart1' %}">&#x2190; Back to Cart</a>
+                    {% else %}
                     <a  class="btn btn-outline-dark" href="{% url 'cart' order.id %}">&#x2190; Back to Cart</a>
                     <hr>
+                    
                     <h3>Order Summary</h3>
                     <hr>
                     {% for item in items%}
@@ -66,10 +71,51 @@
                     {% endfor %}
                     <h5>Items:   {{order.get_cart_item}}</h5>
                     <h5>Total:   &euro;{{order.get_cart_total|floatformat:2}}</h5>
+                    {% endif %}
                 </div>
             </div>
         </div>
 </div>
+<script src="https://www.paypal.com/sdk/js?client-id=AZ-aftjaMXh5A58nObBjFDUYpycIfFwGozDJo_OO_QcGlbBF0XBFMwi2EZCei1Qnc37jGg5oyiiZArQP=USD"></script>
+<script>
+    // Render the PayPal button into #paypal-button-container
+    paypal.Buttons({
+
+        style:{
+            color:'blue',
+            shape:'rect',
+
+        },
+        // Set up the transaction
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: '88.44'
+                    }
+                }]
+            });
+        },
+
+        // Finalize the transaction
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(orderData) {
+                // Successful capture! For demo purposes:
+                console.log('Capture result', orderData, JSON.stringify(orderData, null, 2));
+                var transaction = orderData.purchase_units[0].payments.captures[0];
+                alert('Transaction '+ transaction.status + ': ' + transaction.id + '\n\nSee console for all available details');
+
+                // Replace the above to show a success message within this page, e.g.
+                // const element = document.getElementById('paypal-button-container');
+                // element.innerHTML = '';
+                // element.innerHTML = '<h3>Thank you for your payment!</h3>';
+                // Or go to another URL:  actions.redirect('thank_you.html');
+            });
+        }
+
+
+    }).render('#paypal-button-container');
+</script>
     <script type="text/javascript">
         var shipping ='{{order.shipping}}'
         var total = '{{order.get_cart_total}}'
@@ -94,9 +140,9 @@
             document.getElementById('payment-info').classList.remove("hidden");
         })
 
-        document.getElementById("make-payment").addEventListener('click',function(e){
-            submitformData()
-        })
+        // document.getElementById("make-payment").addEventListener('click',function(e){
+        //     submitformData()
+        // })
         function submitformData(){
             console.log("Payment button clicked")
             var userFormData={
@@ -136,8 +182,11 @@
             .then((data)=>{
                 console.log('Success:',data);
                 alert('Transcation completed');
-                window.location.href="{% url 'store' user.id %}"
-            })
+              
+                window.location.href="{% url 'home' %}"}
+               
+            
+            )
         }
     </script>
 {% endblock content %}

@@ -14,7 +14,7 @@ from store.models import Product
 import json
 import datetime
 
-# from .utils import cookieCart, cartData, guestOrder
+from .utils import cookieCart, cartData, guestOrder
 
 
 class CustomLoginView(LoginView):
@@ -28,9 +28,24 @@ class CustomLoginView(LoginView):
 
 
 def HomePage(request):
-    orders = Order.objects.filter(complete=False)
+    if request.user.is_authenticated:
+        orders = Order.objects.filter(complete=False)
+
+    else:
+        orders = {"get_cart_total": 0, "get_cart_item": 0, "shipping": False}
+    cartitem = 0
+    # cartitem = orders.get_cart_item
+    # avoid an error if cart cookie when loads first time by user
+    try:
+        cart = json.loads(request.COOKIES["cart"])
+    except:
+        cart = {}
+    print("cart:", cart)
+
+    for i in cart:
+        cartitem += cart[i]["quantity"]
     customer = Customer.objects.all()
-    context = {"orders": orders, "customer": customer}
+    context = {"orders": orders, "customer": customer, "cartitem": cartitem}
     return render(request, "store/home.html", context)
 
 
@@ -87,27 +102,80 @@ class OrderList(LoginRequiredMixin, ListView):
         return context
 
 
-# def store(request):
-#     data = cartData(request)
+def store(request):
+    # data = cartData(request)
 
-#     cartItems = data["cartItems"]
-#     order = data["order"]
-#     items = data["items"]
+    # cartItems = data["cartItems"]
+    # order = data["order"]
+    # items = data["items"]
+    order = {"get_cart_total": 0, "get_cart_item": 0, "shipping": False}
+    cartitem = order["get_cart_item"]
+    try:
+        cart = json.loads(request.COOKIES["cart"])
+    except:
+        cart = {}
+    print("Cart:", cart)
 
-#     products = Product.objects.all()
-#     context = {"products": products, "cartItems": cartItems}
-#     return render(request, "store/store.html", context)
+    for i in cart:
+        cartitem += cart[i]["quantity"]
+
+    products = Product.objects.all()
+    context = {"products": products, "cartitem": cartitem}
+    return render(request, "store/store.html", context)
 
 
-# def cart(request):
-#     data = cartData(request)
+def cart(request):
+    cookieData = cookieCart(request)
+    cartitem = cookieData["cartitem"]
+    order_1 = cookieData["order"]
+    items = cookieData["items"]
+    # data = cartData(request)
 
-#     orders = data["cartItems"]
-#     order_1 = data["order"]
-#     items = data["items"]
+    # orders = data["cartItems"]
+    # order_1 = data["order"]
+    # items = data["items"]
+    # items = []
+    # order_1 = {"get_cart_total": 0, "get_cart_item": 0, "shipping": False}
+    # cartitem = order_1["get_cart_item"]
+    # try:
+    #     cart = json.loads(request.COOKIES["cart"])
+    # except:
+    #     cart = {}
+    # print("Cart:", cart)
 
-#     context = {"items": items, "orders": orders, "order_1": order_1}
-#     return render(request, "store/cart.html", context)
+    # for i in cart:
+    #     # to avoid error if product removed from database
+    #     try:
+    #         cartitem += cart[i]["quantity"]
+    #         product = Product.objects.get(id=i)
+    #         total = product.price * cart[i]["quantity"]
+    #         order_1["get_cart_total"] = total
+    #         order_1["get_cart_item"] += cart[i]["quantity"]
+    #         item = {
+    #             "product": {
+    #                 "id": product.id,
+    #                 "name": product.name,
+    #                 "price": product.price,
+    #                 "imageURL": product.imageURL,
+    #             },
+    #             "quantity": cart[i]["quantity"],
+    #             "get_total": total,
+    #         }
+    #         items.append(item)
+    #         if product.digital == False:
+    #             order_1["shipping"] = True
+    #     except:
+    #         pass
+    # context = {"items": items, "orders": orders, "order_1": order_1}
+    return render(
+        request,
+        "store/cart.html",
+        {
+            "cartitem": cartitem,
+            "order_1": order_1,
+            "items": items,
+        },
+    )
 
 
 def checkoutPage(request):
@@ -118,11 +186,20 @@ def checkoutPage(request):
         order, created = Order.objects.get_or_create(customer=customer, complete=False)
         product = Product.objects.all()
         items = order.orderitem_set.all()
-        # else:
-        # Create empty cart for now for non-logged in user
-        # items = []
+    else:
 
-        context = {"items": items, "order": order, "orders": orders}
+        cookieData = cookieCart(request)
+        cartitem = cookieData["cartitem"]
+        order = cookieData["order"]
+        orders = cookieData["order"]
+        items = cookieData["items"]
+
+    context = {
+        "items": items,
+        "order": order,
+        "orders": orders,
+        # "cartitem": cartitem,
+    }
     return render(request, "store/checkout.html", context)
 
 
@@ -130,7 +207,6 @@ def processOrder(request):
     data = json.loads(request.body)
     # print("Data:", request.body)
     transaction_id = datetime.datetime.now().timestamp()
-    # data = json.loads(request.body)
 
     if request.user.is_authenticated:
         customer = request.user.customer

@@ -36,7 +36,7 @@
       
       {% else %}
       <li class="nav-item">
-        <a class="nav-link" href="#">Shop</a>
+        <a class="nav-link" href="{% url 'store1' %}">Shop</a>
       </li>
       {% endif %}
       <li class="nav-item">
@@ -56,26 +56,12 @@
     {% for order in orders%}
     
     {% if order.customer == user.customer %}
-      <h5> {{user.customer}}</h5>
-       <a href="{% url 'cart' order.id  %}">
-         <img  id="cart-icon" style="width:30px;margin-right: 10px;"src="{% static 'images/cart.png' %}">
-         <span  id="cart-total" class="badge rounded-pill badge-notification bg-danger">{{order.get_cart_item}}</span>
-        </a>
-        {% endif %}
-        
-        {% endfor %} 
-     
-
-   </div>
-   
-
-  
     <!-- Avatar -->
     <div class="dropdown">
       <a
-        class="dropdown-toggle d-flex align-items-center hidden-arrow"
-        href="#"
-        id="navbarDropdownMenuAvatar"
+      class="dropdown-toggle d-flex align-items-center hidden-arrow"
+      href="#"
+      id="navbarDropdownMenuAvatar"
         role="button"
         data-mdb-toggle="dropdown"
         aria-expanded="false"
@@ -86,7 +72,7 @@
           height="25"
           alt="Black and White Portrait of a Man"
           loading="lazy"
-          style="margin-left: 20px;"
+          style="margin-left:10px;"
         />
       </a>
       <ul
@@ -98,33 +84,50 @@
         </li>
         <li>
           <!-- <a class="dropdown-item" href="#">Settings</a> -->
-         
+          
         </li>
         <li>
           <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
         </li>
       </ul>
     </div>
+    <h6 style="margin-left:10px;"> {{user.customer}}</h6>
+       <a href="{% url 'cart' order.id  %}">
+         <img  id="cart-icon" style="width:30px;margin-right: 10px;"src="{% static 'images/cart.png' %}">
+         <span  id="cart-total" class="badge rounded-pill badge-notification bg-danger">{{order.get_cart_item}}</span>
+        </a>
+        {% endif %}
+        
+        {% endfor %} 
+     
+
+   
+  
+
+  
+    
   </div>
   
   {% else %}
   <div class="d-flex align-items-center">
     <!-- Icon -->
     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-      <h6><a href="#">Guest</a></h6>
-    
-     <li class="nav-item">
-       <a href="#">
-         <img  id="cart-icon" style="width:30px;margin-right: 10px;"src="{% static 'images/cart.png' %}">
-         <span  id="cart-total" class="badge rounded-pill badge-notification bg-danger"></span>
-     </a>
-       
+  
       <li class="nav-item">
         <a class="nav-link" href="{% url 'login' %}">Login</a>
       </li>
+    
+     <li class="nav-item">
+       <a href="{% url 'cart1' %}">
+         <img  id="cart-icon" style="width:30px;margin-right: 10px;"src="{% static 'images/cart.png' %}">
+         <span  id="cart-total" class="badge rounded-pill badge-notification bg-danger"></span>
+         <span  id="cart-total" class="badge rounded-pill badge-notification bg-danger">{{cartitem}}</span>
+     </a>
+       
     </ul>
     {% endif %}
    </div>
+  </div>
   <!-- Right elements -->
 </div>
 <!-- Container wrapper -->
