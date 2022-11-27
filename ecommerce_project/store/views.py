@@ -129,44 +129,7 @@ def cart(request):
     cartitem = cookieData["cartitem"]
     order_1 = cookieData["order"]
     items = cookieData["items"]
-    # data = cartData(request)
 
-    # orders = data["cartItems"]
-    # order_1 = data["order"]
-    # items = data["items"]
-    # items = []
-    # order_1 = {"get_cart_total": 0, "get_cart_item": 0, "shipping": False}
-    # cartitem = order_1["get_cart_item"]
-    # try:
-    #     cart = json.loads(request.COOKIES["cart"])
-    # except:
-    #     cart = {}
-    # print("Cart:", cart)
-
-    # for i in cart:
-    #     # to avoid error if product removed from database
-    #     try:
-    #         cartitem += cart[i]["quantity"]
-    #         product = Product.objects.get(id=i)
-    #         total = product.price * cart[i]["quantity"]
-    #         order_1["get_cart_total"] = total
-    #         order_1["get_cart_item"] += cart[i]["quantity"]
-    #         item = {
-    #             "product": {
-    #                 "id": product.id,
-    #                 "name": product.name,
-    #                 "price": product.price,
-    #                 "imageURL": product.imageURL,
-    #             },
-    #             "quantity": cart[i]["quantity"],
-    #             "get_total": total,
-    #         }
-    #         items.append(item)
-    #         if product.digital == False:
-    #             order_1["shipping"] = True
-    #     except:
-    #         pass
-    # context = {"items": items, "orders": orders, "order_1": order_1}
     return render(
         request,
         "store/cart.html",
@@ -191,13 +154,13 @@ def checkoutPage(request):
         cookieData = cookieCart(request)
         cartitem = cookieData["cartitem"]
         order = cookieData["order"]
-        orders = cookieData["order"]
+        # orders = cookieData["order"]
         items = cookieData["items"]
 
     context = {
         "items": items,
         "order": order,
-        "orders": orders,
+        # "orders": orders,
         # "cartitem": cartitem,
     }
     return render(request, "store/checkout.html", context)
@@ -211,22 +174,25 @@ def processOrder(request):
     if request.user.is_authenticated:
         customer = request.user.customer
         order, created = Order.objects.get_or_create(customer=customer, complete=False)
-        order.transaction_id = transaction_id
-        total = float(data["form"]["total"])
-        print(data["form"])
-        # avoid manipulating by user
-        if total == order.get_cart_total:
-            order.complete = True
-        order.save()
+    else:
+        customer, order = guestOrder(request, data)
 
-        if order.shipping == True:
-            ShippingAddress.objects.create(
-                customer=customer,
-                order=order,
-                address=data["shipping"]["address"],
-                city=data["shipping"]["city"],
-                state=data["shipping"]["state"],
-                zipcode=data["shipping"]["zipcode"],
-            )
+    total = float(data["form"]["total"])
+    order.transaction_id = transaction_id
+
+    # avoid manipulating by user
+    if total == order.get_cart_total:
+        order.complete = True
+    order.save()
+
+    if order.shipping == True:
+        ShippingAddress.objects.create(
+            customer=customer,
+            order=order,
+            address=data["shipping"]["address"],
+            city=data["shipping"]["city"],
+            state=data["shipping"]["state"],
+            zipcode=data["shipping"]["zipcode"],
+        )
 
     return JsonResponse("Payment submitted..", safe=False)
